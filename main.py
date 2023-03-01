@@ -1,16 +1,29 @@
-# This is a sample Python script.
+import instruction
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    file = open("raw-bytes.txt", 'r')
+    raw_bytes = file.readline().split(' ')
+    file.close()
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    file = open("opcodes.csv", 'r')
+
+    instructions = []
+
+    for line in file.readlines():
+        temp = line.strip().split('|')
+        instructions.append(instruction.Instruction(temp[0], temp[1], temp[2]))
+
+    file.close()
+
+    instructions.pop(0)
+
+    instructions.sort(key=lambda x: int(x.hex_code, 16))
+
+    byte_index = 0
+
+    while byte_index < len(raw_bytes):
+        instruction_byte = int(raw_bytes[byte_index], 16)
+
+        print(instructions[instruction_byte].opcode)
+        byte_index += int(instructions[instruction_byte].required_bytes)
+
