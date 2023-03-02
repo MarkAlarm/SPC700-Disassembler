@@ -1,29 +1,43 @@
-import instruction
+import spc_instruction
 
 if __name__ == '__main__':
-    file = open("raw-bytes.txt", 'r')
-    raw_bytes = file.readline().split(' ')
-    file.close()
-
     file = open("opcodes.csv", 'r')
-
-    instructions = []
+    spc_instructions = []
 
     for line in file.readlines():
         temp = line.strip().split('|')
-        instructions.append(instruction.Instruction(temp[0], temp[1], temp[2]))
-
+        spc_instructions.append(spc_instruction.SPCInstruction(temp[0], temp[1], temp[2]))
     file.close()
 
-    instructions.pop(0)
+    spc_instructions.pop(0)
+    spc_instructions.sort(key=lambda x: int(x.hex_code, 16))
 
-    instructions.sort(key=lambda x: int(x.hex_code, 16))
+    file = open("spc-boot.txt", 'r')
+    spc_engine = file.readline().split(' ')
+    file.close()
 
-    byte_index = 0
+    spc_index = 0
+    while spc_index < len(spc_engine):
+        spc_instruction = spc_instructions[int(spc_engine[spc_index], 16)]
+        required_bytes = int(spc_instruction.required_bytes)
+        formatted_instruction = str(spc_instruction.instruction)
 
-    while byte_index < len(raw_bytes):
-        instruction_byte = int(raw_bytes[byte_index], 16)
+        # one operand
+        if required_bytes == 2:
+            formatted_instruction = formatted_instruction.replace("<d>", f"${spc_engine[spc_index + 1]}")
+            formatted_instruction = formatted_instruction.replace("<i>", f"#${spc_engine[spc_index + 1]}")
 
-        print(instructions[instruction_byte].opcode)
-        byte_index += int(instructions[instruction_byte].required_bytes)
+        # two operands
+        elif required_bytes == 3:
+            formatted_instruction = formatted_instruction.replace("<a>", f"${spc_engine[spc_index + 1]}"
+                                                                         f"{spc_engine[spc_index + 2]}")
+            formatted_instruction = formatted_instruction.replace("<d1>", f"${spc_engine[spc_index + 1]}")
+            formatted_instruction = formatted_instruction.replace("<d2>", f"${spc_engine[spc_index + 2]}")
+            formatted_instruction = formatted_instruction.replace("<d>", f"${spc_engine[spc_index + 1]}")
+            formatted_instruction = formatted_instruction.replace("<i>", f"#${spc_engine[spc_index + 2]}")
+
+        spc_index += required_bytes
+        print(formatted_instruction)
+
+
 
